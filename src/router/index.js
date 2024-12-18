@@ -8,11 +8,26 @@ import ProDetail from '@/views/prodetail'
 import Search from '@/views/search/index.vue'
 import List from '@/views/search/list.vue'
 
+import Home from '@/views/layout/home.vue'
+import Cart from '@/views/layout/cart.vue'
+import Category from '@/views/layout/category.vue'
+import User from '@/views/layout/user.vue'
+
 Vue.use(VueRouter)
 
 const routes = [
   { path: '/login', component: Login },
-  { path: '/', component: Layout },
+  {
+    path: '/',
+    component: Layout,
+    redirect: '/home',
+    children: [
+      { path: '/home', component: Home },
+      { path: '/cart', component: Cart },
+      { path: '/category', component: Category },
+      { path: '/user', component: User }
+    ]
+  },
   { path: '/myorder', component: Myorder },
   { path: '/pay', component: Pay },
   { path: '/prodetail/:id', component: ProDetail },
