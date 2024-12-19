@@ -9,15 +9,17 @@
 
       <div class="form">
         <div class="form-item">
-          <input class="inp" maxlength="11" placeholder="请输入手机号码" type="text">
+          <input v-model="mobile" class="inp" maxlength="11" placeholder="请输入手机号码" type="text">
         </div>
         <div class="form-item">
-          <input class="inp" maxlength="5" placeholder="请输入图形验证码" type="text">
-          <img src="@/assets/code.png" alt="">
+          <input v-model="picCode" class="inp" maxlength="5" placeholder="请输入图形验证码" type="text">
+          <img v-if="picUrl" :src="picUrl" @click="getPicCode" alt="">
         </div>
         <div class="form-item">
           <input class="inp" placeholder="请输入短信验证码" type="text">
-          <button>获取验证码</button>
+          <button @click="getCode">
+            {{ second === totalSecond ? '获取验证码' : second + '后重新发送'}}
+          </button>
         </div>
       </div>
 
@@ -27,8 +29,63 @@
 </template>
 
 <script>
+import { getMsgCode, getPicCodeApi } from '@/api/login'
+
 export default {
-  name: 'LoginPage'
+  name: 'LoginPage',
+  data () {
+    return {
+      picUrl: '', // 验证码渲染的图片地址
+      totalSecond: 60, // 总秒数
+      second: 60, // 倒计时秒数
+      timer: null, // 定时器id
+      picCode: '', // 用户输入的图形验证码
+      mobile: '' // 用户输入的手机号码
+    }
+  },
+  async created () {
+    this.getPicCode()
+  },
+  destroyed () {
+    clearInterval(this.timer)
+  },
+  methods: {
+    async getPicCode () {
+      const { data: { base64, key } } = await getPicCodeApi()
+      this.picUrl = base64
+      this.picKey = key
+      this.$toast('获取验证码图片成功')
+    },
+    async getCode () {
+      if (!this.validFn()) {
+        return
+      }
+      if (!this.timer && this.second === this.totalSecond) {
+        await getMsgCode(this.picCode, this.key, this.mobile)
+        this.$toast('验证码发送成功')
+        this.timer = setInterval(() => {
+          this.second--
+          if (this.second <= 0) {
+            clearInterval(this.timer)
+            this.timer = null
+            this.second = this.totalSecond
+          }
+        }, 1000)
+      }
+    },
+    validFn () {
+      if (!/^1[3-9]\d{9}$/.test(this.mobile)) {
+        this.$toast('请输入正确的手机号')
+        return false
+      }
+      if (!/^\w{4}$/.test(this.picCode)) {
+        this.$toast('请输入正确的验证码')
+        return false
+      }
+      return true
+    }
+
+  }
 }
 </script>
 
