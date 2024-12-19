@@ -16,20 +16,20 @@
           <img v-if="picUrl" :src="picUrl" @click="getPicCode" alt="">
         </div>
         <div class="form-item">
-          <input class="inp" placeholder="请输入短信验证码" type="text">
+          <input v-model="msgCode" class="inp" placeholder="请输入短信验证码" type="text">
           <button @click="getCode">
             {{ second === totalSecond ? '获取验证码' : second + '后重新发送'}}
           </button>
         </div>
       </div>
 
-      <div class="login-btn">登录</div>
+      <div @click="login" class="login-btn">登录</div>
     </div>
   </div>
 </template>
 
 <script>
-import { getMsgCode, getPicCodeApi } from '@/api/login'
+import { codeLogin, getMsgCode, getPicCode } from '@/api/login'
 
 export default {
   name: 'LoginPage',
@@ -40,7 +40,8 @@ export default {
       second: 60, // 倒计时秒数
       timer: null, // 定时器id
       picCode: '', // 用户输入的图形验证码
-      mobile: '' // 用户输入的手机号码
+      mobile: '', // 用户输入的手机号码
+      msgCode: '' // 用户输入的手机验证码
     }
   },
   async created () {
@@ -50,12 +51,15 @@ export default {
     clearInterval(this.timer)
   },
   methods: {
+    // 获取图片验证码
     async getPicCode () {
-      const { data: { base64, key } } = await getPicCodeApi()
+      const { data: { base64, key } } = await getPicCode()
       this.picUrl = base64
       this.picKey = key
       this.$toast('获取验证码图片成功')
     },
+
+    // 获取短信验证码
     async getCode () {
       if (!this.validFn()) {
         return
@@ -73,6 +77,10 @@ export default {
         }, 1000)
       }
     },
+
+    // 校验手机号和图片验证码是否合法
+    // 通过返回true
+    // 校验失败返回false，并给出toast
     validFn () {
       if (!/^1[3-9]\d{9}$/.test(this.mobile)) {
         this.$toast('请输入正确的手机号')
@@ -83,8 +91,20 @@ export default {
         return false
       }
       return true
-    }
+    },
 
+    async login () {
+      if (!this.validFn()) {
+        return
+      }
+      if (!/^\d{6}$/.test(this.msgCode)) {
+        this.$toast('请输入正确的手机验证码')
+        return
+      }
+      await codeLogin(this.mobile, this.msgCode)
+      this.$router.push('/')
+      this.$toast('登录成功')
+    }
   }
 }
 </script>
