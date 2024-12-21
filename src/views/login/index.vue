@@ -92,7 +92,7 @@ export default {
       }
       return true
     },
-
+    // 登录模块
     async login () {
       if (!this.validFn()) {
         return
@@ -101,7 +101,8 @@ export default {
         this.$toast('请输入正确的手机验证码')
         return
       }
-      await codeLogin(this.mobile, this.msgCode)
+      const res = await codeLogin(this.mobile, this.msgCode)
+      console.log(res)
       this.$router.push('/')
       this.$toast('登录成功')
     }
